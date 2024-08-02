@@ -68,6 +68,11 @@
 	z-index: 9999;
 }
 
+.user-registration-page .select2-dropdown {
+	padding: 0px !important;
+}
+
+
 .ur-timepicker-range {
     display: flex;
 }
@@ -80,6 +85,7 @@
 */
 .user-registration-message,
 .user-registration-error,
+.user-registration-coupon-error,
 .user-registration-info {
 	display: block;
 	margin: 0 0 10px;
@@ -146,6 +152,13 @@
 		content: "\f534";
 	}
 }
+.user-registration-coupon-error {
+	border-top-color: $red;
+	background: rgba($red, 0.1);
+	color: darken($red, 15%);
+	margin-top: 10px;
+}
+
 input.ur-input-border-green, textarea.ur-input-border-green{
 	border-color: #1EA71B !important;
 }
@@ -918,6 +931,8 @@ input.ur-input-border-red, textarea.ur-input-border-red{
 }
 
 .ur-form-row {
+	margin-bottom: 24px;
+
 	.flatpickr-input {
 		padding-left: 32px !important;
 	}

@@ -177,12 +177,18 @@ class UR_Shortcode_My_Account {
 	 * @param array $atts Shortcode attributes.
 	 */
 	private static function my_account( $atts ) {
+		$is_disabled = get_user_meta( get_current_user_id(), 'ur_disable_users', true );
+		if($is_disabled){
+			wp_logout();
+		}else{
+
 		ur_get_template(
 			'myaccount/my-account.php',
 			array(
 				'current_user' => get_user_by( 'id', get_current_user_id() ),
 			)
 		);
+	  	}
 	}
 
 	/**
@@ -204,6 +210,13 @@ class UR_Shortcode_My_Account {
 		$form_data_array = ( $form_id ) ? UR()->form->get_form( $form_id, array( 'content_only' => true ) ) : array();
 
 		if ( ! empty( $form_data_array ) ) {
+
+			$form_row_ids       = get_post_meta( $form_id, 'user_registration_form_row_ids', true );
+			$form_row_ids_array = json_decode( $form_row_ids );
+
+			if ( gettype( $form_row_ids_array ) != 'array' ) {
+				$form_row_ids_array = array();
+			}
 
 			if ( count( $profile ) < 1 ) {
 				return;
@@ -240,6 +253,7 @@ class UR_Shortcode_My_Account {
 				array(
 					'profile'         => apply_filters( 'user_registration_profile_to_edit', $profile ),
 					'form_data_array' => apply_filters( 'user_registration_form_data_to_edit', $form_data_array ),
+					'row_ids'         => $form_row_ids_array,
 				)
 			);
 		} else {

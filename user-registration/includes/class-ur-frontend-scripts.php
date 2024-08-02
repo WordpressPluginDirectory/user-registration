@@ -41,7 +41,9 @@ class UR_Frontend_Scripts {
 	 * Hook in methods.
 	 */
 	public static function init() {
-		add_action( 'wp_enqueue_scripts', array( __CLASS__, 'load_scripts' ), 5 );
+		add_action( 'user_registration_enqueue_scripts', array( __CLASS__, 'load_scripts' ), 5 );
+		add_action( 'user_registration_my_account_enqueue_scripts', array( __CLASS__, 'load_scripts' ), 5 );
+		add_action( 'before-user-registration-my-account-shortcode', array( __CLASS__, 'load_my_account_scripts' ) );
 		add_action( 'wp_print_scripts', array( __CLASS__, 'localize_printed_scripts' ), 5 );
 		add_action( 'wp_print_footer_scripts', array( __CLASS__, 'localize_printed_scripts' ), 5 );
 	}
@@ -69,19 +71,28 @@ class UR_Frontend_Scripts {
 		return apply_filters(
 			'user_registration_enqueue_styles',
 			array(
-				'sweetalert2'                         => array(
+				'sweetalert2'               => array(
 					'src'     => UR()->plugin_url() . '/assets/css/sweetalert2/sweetalert2.min.css',
 					'deps'    => '',
 					'version' => '10.16.7',
 					'media'   => 'all',
 				),
-				'user-registration-general'           => array(
+				'user-registration-general' => array(
 					'src'     => self::get_asset_url( 'assets/css/user-registration.css' ),
 					'deps'    => '',
 					'version' => UR_VERSION,
 					'media'   => 'all',
 					'has_rtl' => true,
 				),
+
+			)
+		);
+	}
+
+	public static function get_my_account_scripts() {
+		return apply_filters(
+			'user_registration_enqueue_my_account_styles',
+			array(
 				/**
 				 * Applies a filter to retrieve the breakpoint for small-screen styles.
 				 *
@@ -367,6 +378,23 @@ class UR_Frontend_Scripts {
 
 		wp_enqueue_style( 'dashicons' );
 	}
+	/**
+	 * Register/queue my-account scripts.
+	 */
+	public static function load_my_account_scripts() {
+		global $post;
+
+		// CSS Styles.
+		if ( $enqueue_styles = self::get_my_account_scripts() ) { //phpcs:ignore
+			foreach ( $enqueue_styles as $handle => $args ) {
+				if ( ! isset( $args['has_rtl'] ) ) {
+					$args['has_rtl'] = false;
+				}
+
+				self::enqueue_style( $handle, $args['src'], $args['deps'], $args['version'], $args['media'], $args['has_rtl'] );
+			}
+		}
+	}
 
 	/**
 	 * Localize a UR script once.
@@ -433,6 +461,8 @@ class UR_Frontend_Scripts {
 						'captcha_error'           => get_option( 'user_registration_form_submission_error_message_recaptcha', esc_html__( 'Captcha code error, please try again.', 'user-registration' ) ),
 						'hide_password_title'     => esc_html__( 'Hide Password', 'user-registration' ),
 						'show_password_title'     => esc_html__( 'Show Password', 'user-registration' ),
+						'i18n_total_field_value_zero' => esc_html__( 'Total field value should be greater than zero.', 'user-registration' ),
+						'i18n_discount_total_zero' => esc_html__('Discounted amount cannot be less than or equals to Zero. Please adjust your coupon code.', 'user-registration' ),
 						'password_strength_error' => esc_html__( 'Password strength is not strong enough', 'user-registration' ),
 					),
 					'is_payment_compatible'             => true,
