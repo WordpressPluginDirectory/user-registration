@@ -422,6 +422,7 @@ class UR_Smart_Tags {
 						 */
 						$prefix    = apply_filters( 'ur_unique_id_prefix', 'ur' );
 						$unique_id = uniqid( $prefix, $uni_entropy );
+						$unique_id = apply_filters( 'ur_modify_unique_id_smart_tag', $unique_id );
 						$content   = str_replace( '{{' . $tag . '}}', $unique_id, $content );
 						break;
 					case 'approval_link':
@@ -451,7 +452,7 @@ class UR_Smart_Tags {
 
 						// Send an email to the new address with confirmation link.
 						$confirm_link = add_query_arg( 'confirm_email', $user, add_query_arg( 'confirm_key', $confirm_key, ur_get_my_account_url() . get_option( 'user_registration_myaccount_edit_profile_endpoint', 'edit-profile' ) ) );
-						$confirm_link = sprintf( '<a href="%s" target="_blank">%s</a>', $confirm_link, esc_html__( 'confirm link', 'user-registration' ) );
+						$confirm_link = sprintf( '<a href="%s" rel="noreferrer noopener" target="_blank">%s</a>', $confirm_link, esc_html__( 'confirm link', 'user-registration' ) );
 
 						$content = str_replace( '{{' . $tag . '}}', $confirm_link, $content );
 						break;
