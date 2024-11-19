@@ -588,11 +588,15 @@
 												? field.val()
 												: "";
 
-											formwise_data.field_name = field
+											privacy_field_name = field
 												.closest(
 													".field-privacy_policy"
 												)
 												.data("ref-id");
+
+											if ( "undefined" !== typeof privacy_field_name ) {
+												formwise_data.field_name = privacy_field_name;
+											}
 										}
 										break;
 									case "radio":
@@ -2534,35 +2538,51 @@
 	$(function () {
 		$(".input-checkbox").each(function () {
 			var checkAll = $(this).attr("data-id");
-			if (
-				$('input[name="' + checkAll + '[]"]:checked').length ==
-				$('[data-id = "' + checkAll + '" ]').length
-			) {
-				$('[data-check = "' + checkAll + '" ]').prop("checked", true);
+			if ("undefined" !== typeof checkAll) {
+				if (
+					$('input[name="' + checkAll + '[]"]:checked').length ==
+					$('[data-id = "' + checkAll + '" ]').length
+				) {
+					$('[data-check = "' + checkAll + '" ]').prop(
+						"checked",
+						true
+					);
+				}
 			}
 		});
 
 		$('input[type="checkbox"]#checkall').on("click", function () {
 			var checkAll = $(this).attr("data-check");
-			$('[data-id = "' + checkAll + '[]" ]').prop(
-				"checked",
-				$(this).prop("checked")
-			);
+			if ("undefined" !== typeof checkAll) {
+				$('[data-id = "' + checkAll + '[]" ]').prop(
+					"checked",
+					$(this).prop("checked")
+				);
+			}
 		});
 
 		$(".input-checkbox").on("change", function () {
 			var checkAll = $(this).attr("data-id");
-			checkAll = checkAll.replace("[]", "");
 
-			if ($(this).prop("checked") === false) {
-				$('[data-check = "' + checkAll + '" ]').prop("checked", false);
-			}
+			if ("undefined" !== typeof checkAll) {
+				checkAll = checkAll.replace("[]", "");
 
-			if (
-				$('input[name="' + checkAll + '[]"]:checked').length ==
-				$('[data-id = "' + checkAll + '" ]').length
-			) {
-				$('[data-check = "' + checkAll + '" ]').prop("checked", true);
+				if ($(this).prop("checked") === false) {
+					$('[data-check = "' + checkAll + '" ]').prop(
+						"checked",
+						false
+					);
+				}
+
+				if (
+					$('input[name="' + checkAll + '[]"]:checked').length ==
+					$('[data-id = "' + checkAll + '" ]').length
+				) {
+					$('[data-check = "' + checkAll + '" ]').prop(
+						"checked",
+						true
+					);
+				}
 			}
 		});
 	});
