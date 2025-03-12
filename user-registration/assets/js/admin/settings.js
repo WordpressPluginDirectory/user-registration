@@ -1,4 +1,4 @@
-/* global user_registration_settings_params */
+/* global user_registration_settings_params, ur_login_form_params */
 (function ($) {
 	// Allowed Screens
 	$("select#user_registration_allowed_screens")
@@ -442,12 +442,39 @@
 			$redirect = $(
 				"#user_registration_login_options_login_redirect_url"
 			);
-
 		if (!$check.prop("checked")) {
 			$url.val("").closest(".single_select_page").css("display", "none");
 		} else {
+			var $selected_page = $check.closest('.ur-login-form-setting-block').find('.ur-redirect-to-login-page').val();
+			var login_form_settings = $check.closest('.user-registration-login-form-container');
+			var wpbody_class = $(login_form_settings).closest('#wpbody-content');
+
+			if ('' === $selected_page) {
+				$check.closest('.ur-login-form-setting-block')
+					.find('.ur-redirect-to-login-page')
+					.closest('.user-registration-login-form-global-settings--field')
+					.append('<div class="error inline" style="padding:10px;">' + ur_login_form_params.user_registration_membership_redirect_default_page_message + '</div>');
+			} else {
+				$(wpbody_class).find('#ur-lists-page-topnav').find('.ur_save_login_form_action_button').prop('disabled', false);
+				$check.closest('.ur-login-form-setting-block')
+					.find('.ur-redirect-to-login-page')
+					.closest('.user-registration-login-form-global-settings--field')
+					.find('.error.inline').remove();
+			}
+
 			$redirect.prop("required", true);
 		}
+
+		// Handling the "clear" button click event for Select2.
+		$('select[name="user_registration_login_options_login_redirect_url"]').on('select2:unselect', function() {
+
+			$check.closest('.ur-login-form-setting-block')
+				.find('.ur-redirect-to-login-page')
+				.closest('.user-registration-login-form-global-settings--field')
+				.append('<div class="error inline" style="padding:10px;">' + ur_login_form_params.user_registration_membership_redirect_default_page_message + '</div>');
+
+			$redirect.prop("required", true);
+		});
 	});
 
 	$("#user_registration_login_options_prevent_core_login").on(
@@ -681,6 +708,9 @@
 						.closest("form")
 						.find("input[name='save']")
 						.prop("disabled", false);
+						$this
+						.closest(".user-registration-global-settings").find('.error inline')
+						.remove();
 				}
 				$this.prop("disabled", false);
 
@@ -691,6 +721,49 @@
 			}
 		});
 	});
+
+	// Display error when page with our lost password shortcode is not selected.
+	$("#user_registration_lost_password_page_id").on("change", function () {
+		var $this = $(this),
+			data = {
+				action: "user_registration_lost_password_selection_validator",
+				security: ur_login_form_params.user_registration_lost_password_selection_validator_nonce
+			};
+
+		data.user_registration_selected_lost_password_page = $this.val();
+
+		$this.prop("disabled", true);
+		$this.css("border", "1px solid #e1e1e1");
+
+		$this.closest(".user-registration-global-settings--field").find(".error.inline").remove();
+
+		$.ajax({
+			url: ur_login_form_params.ajax_url,
+			data: data,
+			type: "POST",
+			complete: function (response) {
+				if (response.responseJSON.success === false) {
+					if ($this.closest(".user-registration-login-form-global-settings").find(".error.inline").length === 0) {
+						$this.closest(".user-registration-login-form-global-settings").append(
+							"<div id='message' class='error inline' style='padding:10px;'>" +
+							response.responseJSON.data.message +
+							"</div>"
+						);
+					}
+					$this.css("border", "1px solid red");
+					var login_form = $this.closest('.user-registration-login-form-container');
+					$(login_form).closest('#wpbody-content').find('#ur-lists-page-topnav').find('button[name="save_login_form"]').prop("disabled", true);
+				} else {
+					var login_form = $this.closest('.user-registration-login-form-container');
+					$(login_form).closest('#wpbody-content').find('#ur-lists-page-topnav').find('button[name="save_login_form"]').prop("disabled", false);
+					$this.closest(".user-registration-login-form-global-settings").find(".error.inline").remove();
+				}
+
+				$this.prop("disabled", false);
+			}
+		});
+	});
+
 
 	// Set localStorage with expiry
 	function setStorageValue(key, value) {

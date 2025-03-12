@@ -49,36 +49,37 @@ class UR_AJAX {
 	 */
 	public static function add_ajax_events() {
 		$ajax_events = array(
-			'user_input_dropped'             => true,
-			'user_form_submit'               => true,
-			'update_profile_details'         => true,
-			'profile_pic_upload'             => true,
-			'ajax_login_submit'              => true,
-			'send_test_email'                => false,
-			'create_form'                    => false,
-			'rated'                          => false,
-			'dashboard_widget'               => false,
-			'dismiss_notice'                 => false,
-			'import_form_action'             => false,
-			'template_licence_check'         => false,
-			'captcha_setup_check'            => false,
-			'install_extension'              => false,
-			'profile_pic_remove'             => false,
-			'form_save_action'               => false,
-			'login_settings_save_action'     => false,
-			'embed_form_action'              => false,
-			'embed_page_list'                => false,
-			'allow_usage_dismiss'            => false,
-			'cancel_email_change'            => false,
-			'email_setting_status'           => false,
-			'locked_form_fields_notice'      => false,
-			'search_global_settings'         => false,
-			'php_notice_dismiss'             => false,
-			'locate_form_action'             => false,
-			'form_preview_save'              => false,
-			'captcha_test'                   => false,
-			'generate_row_settings'          => false,
-			'my_account_selection_validator' => false,
+			'user_input_dropped'                => true,
+			'user_form_submit'                  => true,
+			'update_profile_details'            => true,
+			'profile_pic_upload'                => true,
+			'ajax_login_submit'                 => true,
+			'send_test_email'                   => false,
+			'create_form'                       => false,
+			'rated'                             => false,
+			'dashboard_widget'                  => false,
+			'dismiss_notice'                    => false,
+			'import_form_action'                => false,
+			'template_licence_check'            => false,
+			'captcha_setup_check'               => false,
+			'install_extension'                 => false,
+			'profile_pic_remove'                => false,
+			'form_save_action'                  => false,
+			'login_settings_save_action'        => false,
+			'embed_form_action'                 => false,
+			'embed_page_list'                   => false,
+			'allow_usage_dismiss'               => false,
+			'cancel_email_change'               => false,
+			'email_setting_status'              => false,
+			'locked_form_fields_notice'         => false,
+			'search_global_settings'            => false,
+			'php_notice_dismiss'                => false,
+			'locate_form_action'                => false,
+			'form_preview_save'                 => false,
+			'captcha_test'                      => false,
+			'generate_row_settings'             => false,
+			'my_account_selection_validator'    => false,
+			'lost_password_selection_validator' => false,
 		);
 
 		foreach ( $ajax_events as $ajax_event => $nopriv ) {
@@ -1014,7 +1015,8 @@ class UR_AJAX {
 		}
 
 		if ( ur_string_to_bool( $output['user_registration_login_options_prevent_core_login'] ) ) {
-			if ( is_numeric( $output['user_registration_login_options_login_redirect_url'] ) ) {
+
+			if ( ( is_numeric( $output['user_registration_login_options_login_redirect_url'] ) ) && ! empty( $output['user_registration_login_options_login_redirect_url'] ) ) {
 				$is_page_my_account_page = ur_find_my_account_in_page( sanitize_text_field( wp_unslash( $output['user_registration_login_options_login_redirect_url'] ) ) );
 				if ( ! $is_page_my_account_page ) {
 					wp_send_json_error(
@@ -1026,6 +1028,15 @@ class UR_AJAX {
 						)
 					);
 				}
+			} else {
+				wp_send_json_error(
+					array(
+						'message' => esc_html__(
+							'Please select a login redirection page.',
+							'user-registration'
+						),
+					)
+				);
 			}
 		}
 
@@ -1069,8 +1080,8 @@ class UR_AJAX {
 		$page_id = empty( $_POST['page_id'] ) ? 0 : sanitize_text_field( absint( $_POST['page_id'] ) );
 		$form_id = ! empty( $_POST['form_id'] ) ? absint( $_POST['form_id'] ) : 0;
 		if ( empty( $page_id ) ) {
-			$url  = add_query_arg( 'post_type', 'page', admin_url( 'post-new.php' ) );
-			$meta = array(
+			$url             = add_query_arg( 'post_type', 'page', admin_url( 'post-new.php' ) );
+			$meta            = array(
 				'embed_page'       => 0,
 				'embed_page_title' => ! empty( $_POST['page_title'] ) ? sanitize_text_field( wp_unslash( $_POST['page_title'] ) ) : '',
 			);
@@ -1086,15 +1097,17 @@ class UR_AJAX {
 			wp_send_json_success( $page_url );
 		} else {
 			UR_Admin_Embed_Wizard::delete_meta();
-			$url  = get_edit_post_link( $page_id, '' );
-			$post = get_post($page_id);
-			$pattern = '[user_registration_form id="%d"]';
-			$shortcode = sprintf( $pattern, absint( $form_id ) );
+			$url             = get_edit_post_link( $page_id, '' );
+			$post            = get_post( $page_id );
+			$pattern         = '[user_registration_form id="%d"]';
+			$shortcode       = sprintf( $pattern, absint( $form_id ) );
 			$updated_content = $post->post_content . "\n\n" . $shortcode;
-			wp_update_post([
-				'ID'           => $page_id,
-				'post_content' => $updated_content,
-			]);
+			wp_update_post(
+				array(
+					'ID'           => $page_id,
+					'post_content' => $updated_content,
+				)
+			);
 			wp_send_json_success( $url );
 		}
 	}
@@ -1878,6 +1891,38 @@ class UR_AJAX {
 						array(
 							'message' => esc_html__(
 								'The selected page is not a User Registration & Membership Login or My Account page.',
+								'user-registration'
+							),
+						)
+					);
+				}
+			}
+		}
+
+		wp_send_json_success();
+	}
+
+	/**
+	 * AJAX validate selected lost password page.
+	 */
+	public static function lost_password_selection_validator() {
+		check_ajax_referer( 'user_registration_lost_password_selection_validator', 'security' );
+
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( array( 'message' => __( 'You do not have permission to edit settings form.', 'user-registration' ) ) );
+			wp_die( -1 );
+		}
+
+		// Return if default wp_login is disabled and no redirect url is set.
+		if ( isset( $_POST['user_registration_selected_lost_password_page'] ) ) {
+			if ( is_numeric( $_POST['user_registration_selected_lost_password_page'] ) ) {
+				$is_page_lost_password_page = ur_find_lost_password_in_page( sanitize_text_field( wp_unslash( $_POST['user_registration_selected_lost_password_page'] ) ) );
+
+				if ( ! $is_page_lost_password_page ) {
+					wp_send_json_error(
+						array(
+							'message' => esc_html__(
+								'The selected page is not a User Registration & Membership Lost Password page.',
 								'user-registration'
 							),
 						)

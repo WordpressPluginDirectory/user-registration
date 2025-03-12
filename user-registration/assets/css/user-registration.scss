@@ -150,10 +150,10 @@
 }
 
 .user-registration-error {
-	border-top-color: $red !important;
-	background: rgba($red, 0.1) !important;
-	color: darken($red, 15%) !important;
-	
+	border-top-color: $red;
+	background: rgba($red, 0.1);
+	color: darken($red, 15%);
+
 	&::before {
 		content: "\f534";
 	}
@@ -163,6 +163,33 @@
 	background: rgba($red, 0.1);
 	color: darken($red, 15%);
 	margin-top: 10px;
+}
+
+.user-registration-membership-notice__container {
+	position: fixed;
+	top: 20px;
+	right: 0px;
+	z-index: 1000;
+	transition: right 0.5s ease;
+	background-color: #f7fdf8;
+	border-left: 4px solid #49c85f;
+	padding-right: 24px;
+	color: #222;
+}
+
+.user-registration-membership-notice__red {
+	padding: 10px;
+}
+
+.user-registration-membership-notice__blue {
+	padding: 20px;
+}
+
+.user-registration-membership__close_notice {
+	color: red;
+	cursor: pointer;
+	font-weight: bold;
+	padding-left: 16px;
 }
 
 input.ur-input-border-green:not([type="range"]),
@@ -1735,6 +1762,7 @@ body {
 
 					li {
 						flex: 1;
+						list-style: none;
 					}
 				}
 			}
@@ -2684,6 +2712,15 @@ body {
 					}
 				}
 			}
+		}
+	}
+}
+
+body.user-registration-page {
+	.elementor-widget-container {
+		.user-registration:not(.user-registration-MyAccount) {
+			background: transparent;
+			border-radius: 0;
 		}
 	}
 }

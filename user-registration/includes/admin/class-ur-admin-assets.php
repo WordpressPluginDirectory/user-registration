@@ -212,7 +212,7 @@ class UR_Admin_Assets {
 
 		wp_register_script( 'flatpickr', UR()->plugin_url() . '/assets/js/flatpickr/flatpickr.min.js', array( 'jquery' ), '4.6.9', false );
 		wp_register_script( 'perfect-scrollbar', UR()->plugin_url() . '/assets/js/perfect-scrollbar/perfect-scrollbar.min.js', array( 'jquery' ), '1.5.0', false );
-		wp_register_script( 'chartjs', UR()->plugin_url() . '/assets/js/chartjs/Chart.min.js', array( 'jquery' ), '3.2.1', false );
+		wp_register_script( 'ur-chartjs', UR()->plugin_url() . '/assets/js/chartjs/Chart.min.js', array( 'jquery' ), '3.2.1', false );
 		wp_register_script( 'sweetalert2', UR()->plugin_url() . '/assets/js/sweetalert2/sweetalert2.min.js', array( 'jquery' ), '10.16.7', false );
 		wp_register_script( 'ur-setup', UR()->plugin_url() . '/assets/js/admin/ur-setup' . $suffix . '.js', array( 'jquery', 'sweetalert2', 'updates', 'wp-i18n' ), UR_VERSION, false );
 
@@ -468,7 +468,7 @@ class UR_Admin_Assets {
 		}
 
 		if ( 'user-registration-membership_page_user-registration-dashboard' === $screen_id ) {
-			wp_enqueue_script( 'chartjs' );
+			wp_enqueue_script( 'ur-chartjs' );
 		}
 		// send test email.
 		$current_tab = ! empty( $_REQUEST['tab'] ) ? sanitize_title( wp_unslash( $_REQUEST['tab'] ) ) : ''; //phpcs:ignore WordPress.Security.NonceVerification
@@ -653,6 +653,11 @@ class UR_Admin_Assets {
 			'activation_required_message'                 => __( 'Please activate <strong>%plugin%</strong> addon to use this integration.', 'user-registration' ),
 			'installation_required_title'                 => __( 'Addon Installation Required', 'user-registration' ),
 			'installation_required_message'               => __( 'Please install <strong>%plugin%</strong> addon to use this integration.', 'user-registration' ),
+			'min_length_less_than_max_length'             => esc_html__( 'Minimum length count should be less than maximum length count for', 'user-registration' ),
+			'invalid_max_length'                          => esc_html__( 'Invalid maximum length count for', 'user-registration' ),
+			'invalid_min_length'                          => esc_html__( 'Invalid minimum length count for', 'user-registration' ),
+			'i18n_min_max_mode'                          => _x( 'The max and min length limit mode for %field% must be same.', 'user registration admin', 'user-registration' ),
+			'i18n_min_max_text_input'                          => _x( 'The max length limit for %field% must be greater than min length.', 'user registration admin', 'user-registration' ),
 			'i18n_prompt_no_membership_group_selected'    => __( 'Please select a membership group for the selected membership field.', 'user-registration' ),
 			'i18n_prompt_no_membership_available'         => __( 'Please create at least one active membership to use a membership field.', 'user-registration' ),
 			'i18n_empty_membership_text'                  => __( 'No active membership\'s available', 'user-registration' ),

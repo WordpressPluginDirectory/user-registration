@@ -959,9 +959,9 @@
 }
 
 .user-registration-error {
-  border-top-color: #ff4f55 !important;
-  background: rgba(255, 79, 85, 0.1) !important;
-  color: rgb(255, 2.5, 11.1079545455) !important;
+  border-top-color: #ff4f55;
+  background: rgba(255, 79, 85, 0.1);
+  color: rgb(255, 2.5, 11.1079545455);
 }
 .user-registration-error::before {
   content: "\f534";
@@ -972,6 +972,33 @@
   background: rgba(255, 79, 85, 0.1);
   color: rgb(255, 2.5, 11.1079545455);
   margin-top: 10px;
+}
+
+.user-registration-membership-notice__container {
+  position: fixed;
+  top: 20px;
+  right: 0px;
+  z-index: 1000;
+  transition: right 0.5s ease;
+  background-color: #f7fdf8;
+  border-left: 4px solid #49c85f;
+  padding-right: 24px;
+  color: #222;
+}
+
+.user-registration-membership-notice__red {
+  padding: 10px;
+}
+
+.user-registration-membership-notice__blue {
+  padding: 20px;
+}
+
+.user-registration-membership__close_notice {
+  color: red;
+  cursor: pointer;
+  font-weight: bold;
+  padding-left: 16px;
 }
 
 input.ur-input-border-green:not([type=range]),
@@ -2213,6 +2240,7 @@ body.user-registration-page #user-registration:not(.user-registration-MyAccount)
 }
 body.user-registration-page #user-registration:not(.user-registration-MyAccount) .user-registration-message li, body.ur-multi-device-form-preview #user-registration:not(.user-registration-MyAccount) .user-registration-message li, body.user-registration-membership_page_user-registration-login-forms #user-registration:not(.user-registration-MyAccount) .user-registration-message li {
   flex: 1;
+  list-style: none;
 }
 body.user-registration-page #user-registration .ur-message-container, body.ur-multi-device-form-preview #user-registration .ur-message-container, body.user-registration-membership_page_user-registration-login-forms #user-registration .ur-message-container {
   box-shadow: none;
@@ -3109,4 +3137,9 @@ body.user-registration-membership_page_user-registration-login-forms .user-regis
 }
 .user-registration-membership_page_user-registration-login-forms #wpcontent .user-registration-login-form-container .user-registration__wrap .user-registration-login-settings-form a {
   pointer-events: none;
+}
+
+body.user-registration-page .elementor-widget-container .user-registration:not(.user-registration-MyAccount) {
+  background: transparent;
+  border-radius: 0;
 }
