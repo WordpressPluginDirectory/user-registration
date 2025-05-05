@@ -15,6 +15,7 @@ class ComposerStaticInit35266d546f6a0a3b5aef3de57c1aef8c
         array (
             'WPEverest\\URMembership\\Payment\\' => 31,
             'WPEverest\\URMembership\\' => 23,
+            'WPEverest\\URM\\DiviBuilder\\' => 26,
         ),
         'S' => 
         array (
@@ -34,6 +35,10 @@ class ComposerStaticInit35266d546f6a0a3b5aef3de57c1aef8c
         'WPEverest\\URMembership\\' => 
         array (
             0 => __DIR__ . '/../..' . '/modules/membership/includes',
+        ),
+        'WPEverest\\URM\\DiviBuilder\\' => 
+        array (
+            0 => __DIR__ . '/../..' . '/includes/3rd-party/DiviBuilder',
         ),
         'Stripe\\' => 
         array (
