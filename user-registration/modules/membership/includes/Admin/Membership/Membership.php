@@ -16,6 +16,7 @@ use WPEverest\URMembership\Admin\Membership\ListTable;
 use WPEverest\URMembership\Admin\MembershipGroups\MembershipGroups;
 use WPEverest\URMembership\Admin\Repositories\SubscriptionRepository;
 use WPEverest\URMembership\Admin\Services\MembershipGroupService;
+use WPEverest\URMembership\Admin\Services\MembershipService;
 use WPEverest\URMembership\Admin\Services\SubscriptionService;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -31,6 +32,7 @@ class Membership {
 	public function __construct() {
 
 		$this->init_hooks();
+
 	}
 
 	/**
@@ -47,6 +49,7 @@ class Membership {
 		add_action( 'admin_init', array( $this, 'actions' ) );
 		add_action( 'in_admin_header', array( __CLASS__, 'hide_unrelated_notices' ) );
 		add_filter( 'wp_editor_settings', array( $this, 'remove_media_buttons' ) );
+		add_filter( 'user_registration_login_options', array( $this, 'add_payment_login_option' ) );
 
 	}
 
@@ -95,7 +98,6 @@ class Membership {
 	 * Membership Listing admin actions.
 	 */
 	public function actions() {
-
 		if ( isset( $_GET['page'] ) && 'user-registration-membership' === $_GET['page'] ) {
 
 			// Bulk actions.
@@ -316,9 +318,13 @@ class Membership {
 		switch ( $action_page ) {
 			case 'add_new_membership':
 				if ( $post_id ) {
-					$membership         = get_post( $post_id );
-					$membership_details = json_decode( wp_unslash( get_post_meta( $post_id, 'ur_membership', true ) ), true );
+					$membership             = get_post( $post_id );
+					$membership_details     = json_decode( wp_unslash( get_post_meta( $post_id, 'ur_membership', true ) ), true );
+					$membership_description = get_post_meta( $post_id, 'ur_membership_description', true );
+
+					$membership_details['description'] = $membership_description;
 				}
+
 				$this->render_membership_creator( $membership, $membership_details, $menu_items );
 				break;
 			case 'list_groups':
@@ -359,6 +365,8 @@ class Membership {
 	public function render_membership_creator( $membership = null, $membership_details = null, $menu_items = null ) {
 		$enable_membership_button = false;
 		$roles                    = wp_roles()->role_names;
+		$membership_service       = new MembershipService();
+		$memberships = $membership_service->list_active_memberships();
 
 		include __DIR__ . '/../Views/membership-create.php';
 
@@ -393,7 +401,7 @@ class Membership {
 		$posts = get_posts(
 			array(
 				'post_status' => 'publish',
-				'numberposts' => - 1,
+				'numberposts' => 100,
 			)
 		);
 		$posts = wp_list_pluck( $posts, 'post_title', 'ID' );
@@ -462,5 +470,21 @@ class Membership {
 			'i18n_paypal_client_secret_id_error'           => __( 'Settings for client_id and client_secret is incomplete.', 'user-registration' ),
 			'i18n_previous_save_action_ongoing'            => _x( 'Previous save action on going.', 'user registration admin', 'user-registration' ),
 		);
+	}
+
+	/**
+	 * Add Payment Before Registration option.
+	 *
+	 * @param array $options Other login options.
+	 *
+	 * @return  array
+	 */
+	public function add_payment_login_option( $options ) {
+
+		if ( ! array_key_exists( 'payment', $options ) ) {
+			$options['payment'] = esc_html__( 'Payment before login', 'user-registration' );
+		}
+
+		return $options;
 	}
 }

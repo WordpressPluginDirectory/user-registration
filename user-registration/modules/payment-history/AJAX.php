@@ -189,15 +189,18 @@ class AJAX {
 				)
 			);
 		}
+
 		$order_id           = absint( $_POST['order_id'] );
 		$order_controller   = new OrdersController();
-		$response           = $order_controller->approve( $order_id );
 		$order              = $order_controller->get( $order_id );
+		$response           = $order_controller->approve( $order_id );
+
 		$order['member_id'] = $order['user_id'];
-		unset( $order['user_id'] );
+		$order['membership'] = $order['post_id'];
+		unset( $order['user_id'],$order['post_id']  );
 
 		$email_service = new EmailService();
-		$email_service->send_email( $order, 'payment_approval' );
+		$email_service->send_email( $order, 'payment_successful' );
 
 		if ( ! $response['status'] ) {
 			wp_send_json_error(

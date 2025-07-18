@@ -33,6 +33,9 @@
 		$(".ur_save_login_form_action_button").on("click", function () {
 			ur_save_login_form_settings();
 		});
+		$('.ur-submit-button.ur-disabled-btn').on("click", function(e) {
+			e.preventDefault();
+		});
 	});
 
 	function ur_save_login_form_settings() {
@@ -169,14 +172,29 @@
 	}
 
 	function hide_show_login_title() {
-		var value = $("#user_registration_login_title").is(":checked"),
-			form = $(".ur-login-form-wrapper").find(".ur-frontend-form.login");
+		var value      = $("#user_registration_login_title").is(":checked"),
+			form       = $(".ur-login-form-wrapper").find(".ur-frontend-form.login"),
+			loginTitle = $("#ur-login-form-setting").find("#user_registration_general_setting_login_form_title"),
+			loginDesc  = $("#ur-login-form-setting").find("#user_registration_general_setting_login_form_desc");
+
 		if (value) {
 			form.find(".user-registration-login-title").show();
 			form.find(".user-registration-login-description").show();
+			loginTitle.closest(".user-registration-login-form-global-settings").show();
+			loginDesc.closest(".user-registration-login-form-global-settings").show();
+
+			$(document).on("change keyup keydown", "#user_registration_general_setting_login_form_title", function () {
+				form.find(".user-registration-login-title").text(loginTitle.val());
+			});
+
+			$(document).on("change keyup keydown", "#user_registration_general_setting_login_form_desc", function () {
+				form.find(".user-registration-login-description").text(loginDesc.val());
+			});
 		} else {
 			form.find(".user-registration-login-description").hide();
 			form.find(".user-registration-login-title").hide();
+			loginTitle.closest(".user-registration-login-form-global-settings").hide();
+			loginDesc.closest(".user-registration-login-form-global-settings").hide();
 		}
 	}
 
@@ -490,7 +508,7 @@
 				);
 
 			form.find(
-				".user-registration-form-row[data-field='password'] label"
+				".user-registration-form-row label[for='password']"
 			).html(value + '<span class="required">*</span>');
 		});
 

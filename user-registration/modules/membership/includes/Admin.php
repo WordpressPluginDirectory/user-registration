@@ -9,6 +9,8 @@
 namespace WPEverest\URMembership;
 
 use WPEverest\URMembership\Admin\Database\Database;
+use WPEverest\URMembership\Admin\Services\SubscriptionService;
+use WPEverest\URMembership\Emails\EmailSettings;
 use WPEverest\URMembership\Admin\Forms\FormFields;
 use WPEverest\URMembership\Admin\Members\Members;
 use WPEverest\URMembership\Admin\Membership\Membership;
@@ -140,6 +142,7 @@ if ( ! class_exists( 'Admin' ) ) :
 				'add_memberships_in_urcr_settings'
 			), 10, 1 );
 			add_action( 'admin_enqueue_scripts', array( $this, 'register_membership_admin_scripts' ) );
+
 		}
 
 		public function register_membership_admin_scripts() {
@@ -233,7 +236,8 @@ if ( ! class_exists( 'Admin' ) ) :
 				$this->frontend = new Frontend();
 			}
 			new FormFields();
-
+			new EmailSettings();
+			new Crons();
 		}
 
 		/**
@@ -387,13 +391,17 @@ if ( ! class_exists( 'Admin' ) ) :
 		 * @return void
 		 */
 		public function add_membership_options() {
-			add_option(
+			/**
+			 * Filters that holds the list of payment gateways to be stored in ur_membership_payment_gateways option.
+			 */
+			$membership_payment_gateways = apply_filters( 'user_registration_membership_payment_gateways', array(
+				'paypal' => __( 'Paypal', 'user-registration' ),
+				'stripe' => __( 'Stripe', 'user-registration' ),
+				'bank'   => __( 'Bank', 'user-registration' ),
+			) );
+			update_option(
 				'ur_membership_payment_gateways',
-				array(
-					'paypal' => __( 'Paypal', 'user-registration' ),
-					'stripe' => __( 'Stripe', 'user-registration' ),
-					'bank'   => __( 'Bank', 'user-registration' ),
-				)
+				$membership_payment_gateways
 			);
 		}
 
@@ -445,5 +453,7 @@ if ( ! class_exists( 'Admin' ) ) :
 
 			return $settings;
 		}
+
+
 	}
 endif;

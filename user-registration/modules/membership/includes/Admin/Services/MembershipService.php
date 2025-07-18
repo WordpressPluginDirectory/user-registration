@@ -167,9 +167,8 @@ class MembershipService {
 				'post_title'     => sanitize_text_field( $data['post_data']['name'] ),
 				'post_content'   => wp_json_encode(
 					array(
-						'description' => sanitize_text_field( $data['post_data']['description'] ),
-						'type'        => sanitize_text_field( $data['post_meta_data']['type'] ),
-						'status'      => wp_validate_boolean( $data['post_data']['status'] ),
+						'type'   => sanitize_text_field( $data['post_meta_data']['type'] ),
+						'status' => wp_validate_boolean( $data['post_data']['status'] ),
 					)
 				),
 				'post_type'      => 'ur_membership',
@@ -178,8 +177,14 @@ class MembershipService {
 				'ping_status'    => 'closed',
 			),
 			'post_meta_data' => array(
-				'meta_key'   => 'ur_membership',
-				'meta_value' => wp_json_encode( $post_meta_data ),
+				'ur_membership'             => array(
+					'meta_key'   => 'ur_membership',
+					'meta_value' => wp_json_encode( $post_meta_data ),
+				),
+				'ur_membership_description' => array(
+					'meta_key'   => 'ur_membership_description',
+					'meta_value' => wp_kses_post($data['post_data']['description']),
+				)
 			),
 
 		);
@@ -220,16 +225,16 @@ class MembershipService {
 				$data['trial_data']['duration'] = sanitize_text_field( $data['trial_data']['duration'] );
 			}
 		}
-		$data['cancel_subscription'] = sanitize_text_field( !empty($data['cancel_subscription']) ? $data['cancel_subscription'] : '' );
+		$data['cancel_subscription'] = sanitize_text_field( ! empty( $data['cancel_subscription'] ) ? $data['cancel_subscription'] : '' );
 
 		$data['amount'] = absint( $data['amount'] ?? 0 );
 		if ( isset( $data['payment_gateways'] ) ) {
 			if ( isset( $data['payment_gateways']['paypal'] ) && 'on' === $data['payment_gateways']['paypal']['status'] ) {
 				$data['payment_gateways']['paypal']['status']     = sanitize_text_field( $data['payment_gateways']['paypal']['status'] );
-				$data['payment_gateways']['paypal']['email']      = sanitize_email( !empty($data['payment_gateways']['paypal']['email']) ? $data['payment_gateways']['paypal']['email'] : '' );
-				$data['payment_gateways']['paypal']['mode']       = sanitize_text_field( !empty($data['payment_gateways']['paypal']['mode']) ? $data['payment_gateways']['paypal']['mode'] : 'sandbox' );
-				$data['payment_gateways']['paypal']['cancel_url'] = esc_url( !empty($data['payment_gateways']['paypal']['cancel_url']) ? $data['payment_gateways']['paypal']['cancel_url'] : ''  );
-				$data['payment_gateways']['paypal']['return_url'] = esc_url( !empty($data['payment_gateways']['paypal']['return_url']) ? $data['payment_gateways']['paypal']['return_url'] : '' );
+				$data['payment_gateways']['paypal']['email']      = sanitize_email( ! empty( $data['payment_gateways']['paypal']['email'] ) ? $data['payment_gateways']['paypal']['email'] : '' );
+				$data['payment_gateways']['paypal']['mode']       = sanitize_text_field( ! empty( $data['payment_gateways']['paypal']['mode'] ) ? $data['payment_gateways']['paypal']['mode'] : 'sandbox' );
+				$data['payment_gateways']['paypal']['cancel_url'] = esc_url( ! empty( $data['payment_gateways']['paypal']['cancel_url'] ) ? $data['payment_gateways']['paypal']['cancel_url'] : '' );
+				$data['payment_gateways']['paypal']['return_url'] = esc_url( ! empty( $data['payment_gateways']['paypal']['return_url'] ) ? $data['payment_gateways']['paypal']['return_url'] : '' );
 			}
 			if ( isset( $data['payment_gateways']['bank'] ) && 'on' === $data['payment_gateways']['bank']['status'] ) {
 				$data['payment_gateways']['bank']['status'] = sanitize_text_field( $data['payment_gateways']['bank']['status'] );
@@ -239,6 +244,11 @@ class MembershipService {
 				$data['payment_gateways']['stripe']['product_id'] = sanitize_text_field( $product_id );
 				$data['payment_gateways']['stripe']['price_id']   = sanitize_text_field( $price_id );
 			}
+		}
+		if ( isset( $data['upgrade_settings'] ) ) {
+			$data['upgrade_settings']['upgrade_action'] = absint( $data['upgrade_settings']['upgrade_action'] );
+			$data['upgrade_settings']['upgrade_path']   = sanitize_text_field( implode( ',', $data['upgrade_settings']['upgrade_path'] ) );
+			$data['upgrade_settings']['upgrade_type']   = ! empty( $data['upgrade_settings']['upgrade_type'] ) ? sanitize_text_field( $data['upgrade_settings']['upgrade_type'] ) : 'full';
 		}
 
 		return $data;
@@ -258,7 +268,7 @@ class MembershipService {
 			'status' => true,
 		);
 
-		if ( isset( $data['post_meta_data']['type'] ) && "subscription" === $data['post_meta_data']['type'] && ! ( is_plugin_active( 'user-registration-pro/user-registration.php' ) ) ) {
+		if ( isset( $data['post_meta_data']['type'] ) && "subscription" === $data['post_meta_data']['type'] && ! ( UR_PRO_ACTIVE ) ) {
 			$result['status']  = false;
 			$result['message'] = esc_html__( "Subscription type is a paid feature.", "user-registration" );
 
@@ -292,7 +302,18 @@ class MembershipService {
 			}
 		}
 
-		return $result;
+		/**
+		 * Filters the membership data validation result
+		 *
+		 * This hook should be used by new payment gateway integrations add-on to validate the membership data.
+		 *
+		 * @param array $result Membership validation result data
+		 * @param array $data Membership data.
+		 *
+		 * @since 4.2.3
+		 *
+		 */
+		return apply_filters( 'user_registration_membership_validate_membership_data', $result, $data );
 	}
 
 	/**
@@ -345,10 +366,13 @@ class MembershipService {
 		$membership_field_exists = false;
 		$match                   = preg_match_all( '/\[user_registration_form\s+id="(\d+)"\]/', $post->post_content, $matches );
 		if ( ! $match ) {
-			$response['status']  = false;
-			$response['message'] = __( 'The selected page does not consist any User Registration & Membership Form.' );
+			$match = preg_match_all( '<!-- /wp:user-registration/membership-listing -->', $post->post_content, $matches );
+			if ( ! $match ) {
+				$response['status']  = false;
+				$response['message'] = __( 'The selected page does not consist any User Registration & Membership Form.' );
 
-			return $response;
+				return $response;
+			}
 		}
 		$fields = ur_get_form_fields( $matches[1][0] );
 		foreach ( $fields as $k => $field ) {
@@ -373,12 +397,15 @@ class MembershipService {
 	private static function verify_thank_you_shortcode( $post, $response ) {
 
 		$content = $post->post_content;
+		$match   = preg_match( '/\[user_registration_membership_thank_you\]/', $content );
+		if ( ! $match ) {
+			$match = preg_match( '<!-- /wp:user-registration/thank-you -->', $content );
+			if ( ! $match ) {
+				$response['status']  = false;
+				$response['message'] = __( 'The selected page does not consist the User Registration & Membership Thank you page Shortcode.' );
 
-		if ( ! preg_match( '/\[user_registration_membership_thank_you\]/', $content ) ) {
-			$response['status']  = false;
-			$response['message'] = __( 'The selected page does not consist the User Registration & Membership Thank you page Shortcode.' );
-
-			return $response;
+				return $response;
+			}
 		}
 
 		return $response;
@@ -409,12 +436,32 @@ class MembershipService {
 				$result = empty( get_option( 'user_registration_global_bank_details' ) );
 				break;
 		}
+		/**
+		 * Filters whether the payment gateway setup is valid.
+		 *
+		 * @param bool $result Payment setup validation check, yield true for invalid setup.
+		 * @param array $data Payment data.
+		 *
+		 * @return bool $result
+		 */
+		$result = apply_filters( 'user_registration_membership_validate_payment_gateway', $result, $data );
 
 		if ( $result ) {
 			$response['status']  = false;
-			$response['message'] = __('Incomplete ' . ucfirst( $data[0] ) . ' setup.', "user-registration");
+			$response['message'] = __( 'Incomplete ' . ucfirst( $data[0] ) . ' setup.', "user-registration" );
 		}
 
 		return $response;
+	}
+
+	public function get_upgradable_membership( $membership_id ) {
+		$membership_details = $this->get_membership_details( $membership_id );
+		if ( ! empty( $membership_details['upgrade_settings'] ) && $membership_details['upgrade_settings']['upgrade_action'] ) {
+			$memberships = $this->membership_repository->get_multiple_membership_by_ID( $membership_details['upgrade_settings']['upgrade_path'] );
+
+			return apply_filters( 'build_membership_list_frontend', $memberships );
+		}
+
+		return array();
 	}
 }
